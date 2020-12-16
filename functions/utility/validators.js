@@ -42,3 +42,19 @@ module.exports.validateRegisterInput = (username, password) => {
         valid: Object.keys(errors).length < 1
     };
 };
+
+
+module.exports.registerLoginInput = (username, password) => {
+    const errors = {};
+    if(username.trim() === '') {
+        errors.email = 'Username tidak boleh kosong';
+    }
+    if(password.trim()  === '') {
+        errors.password = 'Password tidak boleh kosong';
+    }
+
+    return {
+        errors,
+        valid: Object.keys(errors).length === 0 ? true : false
+    };
+};
