@@ -22,26 +22,53 @@ module.exports = {
                                     commentCount: doc.data().commentCount
                                 })
                             })
-                        })
-                        
-                    return posts
-    
+                        })  
+                        return posts 
                 }
                 catch(err){
                     console.log(err);
                     throw new Error(err)
                 }
             },
-            
-            // async getPost() {
+            async getPost(_, {id}, context) {
+                const {username} = await FBAuthContext(context)
 
-            // }
-        },
+                const postDocument = db.doc(`posts/${id}`)
+                const commentCollection =  db.collection(`/posts/${id}/comments`)
+
+                if (username){
+                    try{
+                        let post;
+
+                      await postDocument.get()
+                        .then(doc => {
+                            if (!doc.exists) throw new UserInputError('Postingan tidak ditemukan')
+                            else {
+                                post = doc.data()
+                                post.comments = []
+
+                                return commentCollection.orderBy('createdAt', 'asc').get()
+                            }
+                        })
+                        .then(docs => {
+                            docs.forEach(doc => {
+                                post.comments.push(doc.data())
+                            })
+                        })
+                    return post
+                }
+                catch(err){
+                    console.log(err);
+                    throw new Error(err)
+                }
+            }
+        }               
+    },
         Mutation: {
             async createPost(_, { text }, context) {
                 const {username} = await FBAuthContext(context)
 
-                if(user){
+                if(username){
                     try{
                         const newPost = {
                             owner: username,
@@ -54,6 +81,7 @@ module.exports = {
                         await db.collection('posts').add(newPost)
                             .then(doc => {
                                 newPost.id = doc.id
+                                doc.update({ id: doc.id })
                             })
                         console.log(newPost);
                         return newPost
@@ -87,7 +115,9 @@ module.exports = {
                     console.log(err);
                     throw new UserInputError(err)
             }
-        }
+        },
+
+
     }
 }
             
